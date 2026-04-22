@@ -11,6 +11,14 @@ async def list_assistants(user=Depends(get_current_user)):
     result = sb.table("assistants").select("*").order("created_at", desc=True).execute()
     return result.data
 
+@router.get("/{assistant_id}")
+async def get_assistant(assistant_id: str, user=Depends(get_current_user)):
+    sb = get_service_client()
+    result = sb.table("assistants").select("*").eq("id", assistant_id).single().execute()
+    if not result.data:
+        raise HTTPException(404, "Asistente no encontrado")
+    return result.data
+
 @router.post("/")
 async def create_assistant(body: AssistantCreate, user=Depends(get_current_user)):
     sb = get_service_client()

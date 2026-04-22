@@ -3,7 +3,16 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
-import { Send, ArrowLeft, Bot, User, Loader2 } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  Bot,
+  User,
+  Loader2,
+  Plus,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function ChatPage() {
@@ -14,6 +23,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetchConversations();
@@ -52,7 +62,9 @@ export default function ChatPage() {
   const selectConversation = async (conv: any) => {
     setCurrentConversation(conv);
     try {
-      const { data } = await api.get(`/api/chat/conversations/${id}/${conv.id}/messages`);
+      const { data } = await api.get(
+        `/api/chat/conversations/${id}/${conv.id}/messages`
+      );
       setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -68,6 +80,11 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
 
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
+
     try {
       const { data } = await api.post(
         `/api/chat/conversations/${id}/${currentConversation.id}/messages`,
@@ -82,117 +99,228 @@ export default function ChatPage() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(e);
+    }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Auto-resize
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Conversaciones */}
-      <div className="w-64 bg-white border-r flex flex-col">
-        <div className="p-4 border-b">
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <div className="w-72 bg-surface border-r border-border flex flex-col">
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-border space-y-3">
           <Link
             href="/dashboard/assistants"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition text-sm"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors duration-200 text-sm font-medium"
           >
             <ArrowLeft size={16} />
             Volver al panel
           </Link>
           <button
             onClick={createNewConversation}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            className="w-full flex items-center justify-center gap-2 bg-accent text-white py-2.5 rounded-xl text-sm font-medium hover:bg-accent-hover transition-all duration-200 active:scale-[0.98]"
           >
+            <Plus size={16} />
             Nueva conversación
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => selectConversation(conv)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
-                currentConversation?.id === conv.id
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "hover:bg-gray-100 text-gray-600"
-              }`}
-            >
-              <div className="truncate">{conv.title || "Nueva conversación"}</div>
-              <div className="text-[10px] opacity-60">
-                {new Date(conv.updated_at).toLocaleString()}
-              </div>
-            </button>
-          ))}
+
+        {/* Conversations List */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <MessageSquare className="w-8 h-8 text-text-tertiary mb-2" />
+              <p className="text-xs text-text-tertiary">Sin conversaciones aún</p>
+            </div>
+          ) : (
+            conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => selectConversation(conv)}
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
+                  currentConversation?.id === conv.id
+                    ? "bg-accent-light text-accent font-medium"
+                    : "hover:bg-surface-secondary text-text-secondary"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="shrink-0 opacity-60" />
+                  <span className="truncate text-xs">
+                    {conv.title || "Nueva conversación"}
+                  </span>
+                </div>
+                <div className="text-[10px] opacity-50 mt-1 ml-5">
+                  {new Date(conv.updated_at).toLocaleString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 bg-white border-b flex items-center px-6">
-          <h2 className="font-bold text-lg">Chat con Asistente</h2>
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Chat Header */}
+        <header className="h-16 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-success flex items-center justify-center">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-text-primary">
+                Chat con Asistente
+              </h2>
+              <p className="text-xs text-text-tertiary">
+                RAG · Aislamiento de fuentes activo
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/dashboard/assistants/${id}/documents`}
+            className="text-xs font-medium text-accent hover:text-accent-hover transition-colors px-3 py-1.5 rounded-lg hover:bg-accent-light"
+          >
+            Ver documentos
+          </Link>
         </header>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === "user" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {msg.role === "user" ? <User size={18} /> : <Bot size={18} />}
+        {/* Messages */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-6 py-6"
+        >
+          <div className="max-w-3xl mx-auto space-y-5">
+            {messages.length === 0 && !loading && (
+              <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+                <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-accent/10 to-success-light flex items-center justify-center mb-5">
+                  <Sparkles className="w-8 h-8 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-1">
+                  ¡Hola! Estoy listo para ayudarte
+                </h3>
+                <p className="text-sm text-text-secondary max-w-sm">
+                  Hazme preguntas sobre los documentos que has subido a este asistente. Responderé basándome en su contenido.
+                </p>
               </div>
+            )}
+
+            {messages.map((msg, i) => (
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
-                  msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-tr-none"
-                    : "bg-white border rounded-tl-none text-gray-800"
+                key={i}
+                className={`flex gap-3 animate-fade-in ${
+                  msg.role === "user" ? "flex-row-reverse" : ""
                 }`}
+                style={{ animationDelay: `${i * 30}ms` }}
               >
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 text-[11px] opacity-70">
-                    <p className="font-semibold mb-1">Fuentes utilizadas:</p>
-                    <ul className="list-disc pl-4 space-y-0.5">
-                      {msg.sources.map((s: any, idx: number) => (
-                        <li key={idx} className="truncate">
-                           {s.content_preview}...
-                        </li>
-                      ))}
-                    </ul>
+                {/* Avatar */}
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    msg.role === "user"
+                      ? "bg-accent text-white"
+                      : "bg-gradient-to-br from-surface-secondary to-border-light text-text-secondary"
+                  }`}
+                >
+                  {msg.role === "user" ? (
+                    <User size={16} />
+                  ) : (
+                    <Bot size={16} />
+                  )}
+                </div>
+
+                {/* Bubble */}
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-accent text-white rounded-tr-md"
+                      : "bg-surface border border-border rounded-tl-md text-text-primary shadow-sm"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                  {/* Sources */}
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      <p className="text-[11px] font-semibold text-text-secondary mb-1.5">
+                        📄 Fuentes utilizadas:
+                      </p>
+                      <ul className="space-y-1">
+                        {msg.sources.map((s: any, idx: number) => (
+                          <li
+                            key={idx}
+                            className="text-[11px] text-text-tertiary bg-surface-secondary rounded-lg px-2.5 py-1.5 truncate"
+                          >
+                            {s.content_preview}...
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Typing Indicator */}
+            {loading && (
+              <div className="flex gap-3 animate-fade-in">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-surface-secondary to-border-light text-text-secondary flex items-center justify-center">
+                  <Bot size={16} />
+                </div>
+                <div className="bg-surface border border-border rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-text-tertiary typing-dot" />
+                    <div className="w-2 h-2 rounded-full bg-text-tertiary typing-dot" />
+                    <div className="w-2 h-2 rounded-full bg-text-tertiary typing-dot" />
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
-                <Bot size={18} />
-              </div>
-              <div className="bg-white border rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
-                <Loader2 className="animate-spin text-gray-400" size={18} />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <footer className="p-6 bg-white border-t">
-          <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-4">
-            <input
-              type="text"
-              className="flex-1 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition shadow-sm"
-              placeholder="Pregunta algo sobre tus documentos..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={loading}
-            />
+        {/* Input Area */}
+        <footer className="border-t border-border bg-surface/80 backdrop-blur-xl p-4">
+          <form
+            onSubmit={sendMessage}
+            className="max-w-3xl mx-auto flex items-end gap-3"
+          >
+            <div className="flex-1 bg-surface-secondary border border-border-light rounded-2xl px-4 py-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all duration-200">
+              <textarea
+                ref={inputRef}
+                className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none leading-relaxed"
+                placeholder="Pregunta algo sobre tus documentos..."
+                value={input}
+                onChange={handleTextareaChange}
+                onKeyDown={handleKeyDown}
+                disabled={loading}
+                rows={1}
+                style={{ maxHeight: "160px" }}
+              />
+            </div>
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-sm disabled:opacity-50"
+              className="bg-accent text-white p-3 rounded-xl hover:bg-accent-hover transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.95] shadow-sm shrink-0"
             >
-              <Send size={20} />
+              <Send size={18} />
             </button>
           </form>
+          <p className="max-w-3xl mx-auto text-[10px] text-text-tertiary text-center mt-2">
+            Las respuestas se basan exclusivamente en los documentos subidos a este asistente.
+          </p>
         </footer>
       </div>
     </div>

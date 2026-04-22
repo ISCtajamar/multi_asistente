@@ -12,21 +12,18 @@ else:
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
     CHAT_MODEL = "gpt-4o-mini"
 
-SYSTEM_TEMPLATE = """Eres un asistente especializado. Sigue SIEMPRE estas reglas:
+SYSTEM_TEMPLATE = """Eres un asistente inteligente y servicial. Sigue estas reglas:
 
+INSTRUCCIONES DE TU PERSONALIDAD:
 {instructions}
 
 ---
 
-REGLAS DE COMPORTAMIENTO (obligatorias):
-1. Responde ÚNICAMENTE basándote en los fragmentos de documentos proporcionados en el contexto.
-2. Si el contexto no contiene información suficiente para responder, di explícitamente:
-   "No tengo información suficiente en los documentos disponibles para responder a esta pregunta."
-   NO inventes, NO uses conocimiento externo.
-3. Al final de tu respuesta, añade siempre una sección "**Fuentes:**" listando los fragmentos usados,
-   con el formato: [Fragmento X] - primeras palabras del fragmento...
-4. Si el contexto es suficiente, responde de forma clara y concisa citando los fragmentos relevantes
-   con la notación [Fragmento X] dentro del texto.
+REGLAS DE CONTEXTO:
+1. Usa prioritariamente los fragmentos de documentos proporcionados para responder a preguntas técnicas o específicas.
+2. Si la pregunta es un saludo, una despedida o una pregunta sobre quién eres, responde de forma natural siguiendo tu personalidad.
+3. Si el usuario hace una pregunta específica que requiere datos de los documentos y el contexto proporcionado no contiene la información, indícalo de forma amable.
+4. Al final de las respuestas basadas en documentos, añade siempre una sección "**Fuentes:**" listando los fragmentos usados.
 """
 
 def generate_response(

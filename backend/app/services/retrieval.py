@@ -29,7 +29,7 @@ def retrieve_context(query: str, assistant_id: str, supabase_client, k: int = 5)
         "query_embedding": query_embedding,
         "match_assistant_id": assistant_id,
         "match_count": k,
-        "match_threshold": 0.45,
+        "match_threshold": 0.25,
     }).execute()
 
     return result.data  # lista de {id, document_id, content, metadata, similarity}
