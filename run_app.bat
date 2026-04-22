@@ -21,7 +21,7 @@ if not exist .env (
 
 :: 2. Iniciar Backend en una nueva ventana
 echo [1/2] Iniciando Backend FastAPI...
-start "Backend - FastAPI" cmd /k "call .\.venv\Scripts\activate && cd backend && uvicorn app.main:app --reload --port 8000"
+start "Backend - FastAPI" cmd /k "call .\.venv\Scripts\activate && cd backend && uvicorn app.main:app --reload --port 8000 --host 0.0.0.0"
 
 :: 3. Iniciar Frontend en una nueva ventana
 echo [2/2] Iniciando Frontend Next.js...
@@ -32,8 +32,8 @@ echo ==========================================
 echo   SISTEMA INICIADO CORRECTAMENTE
 echo ==========================================
 echo.
-echo Backend:  http://localhost:8000
-echo Frontend: http://localhost:3000
+echo Backend:  http://127.0.0.1:8000
+echo Frontend: http://127.0.0.1:3000
 echo.
 echo Las ventanas de comando se mantendran abiertas.
 echo Para detener los servicios, cierra sus respectivas ventanas.
