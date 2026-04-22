@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "copy ..\\.env .env.local",
     "dev": "next dev",
+    "prebuild": "copy ..\\.env .env.local",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

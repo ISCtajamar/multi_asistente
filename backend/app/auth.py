@@ -3,17 +3,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import create_client
 from app.config import settings
 
-security = HTTPBearer()
+from pydantic import BaseModel
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verifica el JWT de Supabase y devuelve el user_id."""
-    token = credentials.credentials
-    # Usamos anon key para verificar el token del usuario
-    supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
-    try:
-        user = supabase.auth.get_user(token)
-        if not user.user:
-             raise HTTPException(status_code=401, detail="Token inválido o expirado")
-        return user.user
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+class MockUser(BaseModel):
+    id: str = "00000000-0000-0000-0000-000000000000"
+    email: str = "user@example.com"
+
+def get_current_user():
+    """Devuelve un usuario estático para saltar el control de usuarios."""
+    return MockUser()
