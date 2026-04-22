@@ -12,6 +12,7 @@ import {
   Plus,
   MessageSquare,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -68,6 +69,26 @@ export default function ChatPage() {
       setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);
+    }
+  };
+
+  const deleteConversation = async (e: React.MouseEvent, conversationId: string) => {
+    e.stopPropagation();
+    if (!confirm("¿Estás seguro de eliminar esta conversación?")) return;
+    try {
+      await api.delete(`/api/chat/conversations/${conversationId}`);
+      const updatedConversations = conversations.filter((c) => c.id !== conversationId);
+      setConversations(updatedConversations);
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(null);
+        setMessages([]);
+        if (updatedConversations.length > 0) {
+          selectConversation(updatedConversations[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      alert("Error al eliminar la conversación");
     }
   };
 
@@ -144,30 +165,38 @@ export default function ChatPage() {
             </div>
           ) : (
             conversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => selectConversation(conv)}
-                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
-                  currentConversation?.id === conv.id
-                    ? "bg-accent-light text-accent font-medium"
-                    : "hover:bg-surface-secondary text-text-secondary"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={14} className="shrink-0 opacity-60" />
-                  <span className="truncate text-xs">
-                    {conv.title || "Nueva conversación"}
-                  </span>
-                </div>
-                <div className="text-[10px] opacity-50 mt-1 ml-5">
-                  {new Date(conv.updated_at).toLocaleString("es-ES", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </button>
+              <div key={conv.id} className="relative group">
+                <button
+                  onClick={() => selectConversation(conv)}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all duration-200 pr-10 ${
+                    currentConversation?.id === conv.id
+                      ? "bg-accent-light text-accent font-medium"
+                      : "hover:bg-surface-secondary text-text-secondary"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={14} className="shrink-0 opacity-60" />
+                    <span className="truncate text-xs">
+                      {conv.title || "Nueva conversación"}
+                    </span>
+                  </div>
+                  <div className="text-[10px] opacity-50 mt-1 ml-5">
+                    {new Date(conv.updated_at).toLocaleString("es-ES", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => deleteConversation(e, conv.id)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-text-tertiary hover:text-danger hover:bg-danger-light transition-all duration-200"
+                  title="Eliminar conversación"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             ))
           )}
         </div>

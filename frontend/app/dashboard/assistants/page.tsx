@@ -33,13 +33,20 @@ export default function AssistantsPage() {
     }
   };
 
-  const deleteAssistant = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este asistente?")) return;
+  const deleteAssistant = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const isConfirmed = window.confirm("¿Estás seguro de eliminar este asistente de forma permanente?");
+    if (!isConfirmed) return;
+
     try {
       await api.delete(`/api/assistants/${id}`);
       setAssistants(assistants.filter((a) => a.id !== id));
-    } catch (error) {
+      alert("Asistente eliminado correctamente.");
+    } catch (error: any) {
       console.error("Error deleting assistant:", error);
+      alert("Error al eliminar: " + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -119,8 +126,9 @@ export default function AssistantsPage() {
                     <Bot className="w-5 h-5 text-accent" />
                   </div>
                   <button
-                    onClick={() => deleteAssistant(assistant.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-text-tertiary hover:text-danger hover:bg-danger-light transition-all duration-200"
+                    type="button"
+                    onClick={(e) => deleteAssistant(e, assistant.id)}
+                    className="relative z-10 cursor-pointer opacity-40 group-hover:opacity-100 p-1.5 rounded-lg text-text-tertiary hover:text-danger hover:bg-danger-light transition-all duration-200"
                     title="Eliminar asistente"
                   >
                     <Trash2 size={15} />
