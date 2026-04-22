@@ -13,7 +13,6 @@ async def list_conversations(assistant_id: str, user=Depends(get_current_user)):
     result = sb.table("conversations")\
         .select("*")\
         .eq("assistant_id", assistant_id)\
-        .eq("user_id", user.id)\
         .order("updated_at", desc=True)\
         .execute()
     return result.data

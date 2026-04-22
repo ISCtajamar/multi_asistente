@@ -19,7 +19,6 @@ async def list_documents(assistant_id: str, user=Depends(get_current_user)):
     result = sb.table("documents")\
         .select("*")\
         .eq("assistant_id", assistant_id)\
-        .eq("user_id", user.id)\
         .order("created_at", desc=True)\
         .execute()
     return result.data
@@ -95,6 +94,5 @@ async def delete_document(assistant_id: str, document_id: str, user=Depends(get_
     sb.table("documents").delete()\
         .eq("id", document_id)\
         .eq("assistant_id", assistant_id)\
-        .eq("user_id", user.id)\
         .execute()
     return {"ok": True}
