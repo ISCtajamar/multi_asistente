@@ -282,21 +282,32 @@ export default function ChatPage() {
 
                   {/* Sources */}
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border/50">
-                      <p className="text-[11px] font-semibold text-text-secondary mb-1.5">
-                        📄 Fuentes utilizadas:
-                      </p>
-                      <ul className="space-y-1">
+                    <details className="mt-3 pt-3 border-t border-border/50 group">
+                      <summary className="text-[11px] font-semibold text-text-secondary mb-1.5 cursor-pointer hover:text-accent flex items-center gap-1 list-none select-none">
+                        <span className="group-open:rotate-90 transition-transform text-[8px]">▶</span>
+                        📄 Mostrar {msg.sources.length} fuente{msg.sources.length > 1 ? 's' : ''} utilizada{msg.sources.length > 1 ? 's' : ''}
+                      </summary>
+                      <div className="space-y-2 mt-2">
                         {msg.sources.map((s: any, idx: number) => (
-                          <li
+                          <div
                             key={idx}
-                            className="text-[11px] text-text-tertiary bg-surface-secondary rounded-lg px-2.5 py-1.5 truncate"
+                            className="bg-surface-secondary rounded-lg border border-border-light p-2"
                           >
-                            {s.content_preview}...
-                          </li>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-medium text-accent">
+                                {s.filename || "Documento"}
+                              </span>
+                              <span className="text-[9px] text-text-tertiary">
+                                Similitud: {(s.similarity * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-text-tertiary line-clamp-3 italic">
+                              "{s.content_preview}..."
+                            </p>
+                          </div>
                         ))}
-                      </ul>
-                    </div>
+                      </div>
+                    </details>
                   )}
                 </div>
               </div>

@@ -74,6 +74,14 @@ async def send_message(
     # Retrieval RAG - AISLADO por assistant_id
     chunks = retrieve_context(body.content, assistant_id, sb)
 
+    # Obtener nombres de archivo para las fuentes
+    doc_ids = list(set([c["document_id"] for c in chunks]))
+    if doc_ids:
+        docs_res = sb.table("documents").select("id, filename").in_("id", doc_ids).execute()
+        doc_map = {d["id"]: d["filename"] for d in docs_res.data}
+        for c in chunks:
+            c["filename"] = doc_map.get(c["document_id"], "Documento desconocido")
+
     # Generar respuesta con LLM
     response_text, sources = generate_response(
         user_message=body.content,

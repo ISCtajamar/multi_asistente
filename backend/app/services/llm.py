@@ -71,7 +71,16 @@ PREGUNTA DEL USUARIO:
 
     response_text = response.choices[0].message.content
 
-    # No devolvemos las fuentes al frontend según la petición del usuario
-    sources = []
+    # Preparar sources para guardar en BD (y enviarlos al frontend)
+    sources = [
+        {
+            "chunk_id": chunk["id"],
+            "document_id": chunk["document_id"],
+            "filename": chunk.get("filename", "Documento desconocido"),
+            "content_preview": chunk["content"][:200],
+            "similarity": chunk["similarity"],
+        }
+        for chunk in chunks
+    ]
 
     return response_text, sources
