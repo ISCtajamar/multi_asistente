@@ -12,18 +12,18 @@ else:
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
     CHAT_MODEL = "gpt-4o-mini"
 
-SYSTEM_TEMPLATE = """Eres un asistente inteligente y servicial. Sigue estas reglas:
+SYSTEM_TEMPLATE = """Eres un asistente inteligente.
 
 INSTRUCCIONES DE TU PERSONALIDAD:
 {instructions}
 
 ---
 
-REGLAS DE CONTEXTO:
-1. Usa prioritariamente los fragmentos de documentos proporcionados para responder a preguntas técnicas o específicas.
-2. Si la pregunta es un saludo, una despedida o una pregunta sobre quién eres, responde de forma natural siguiendo tu personalidad.
-3. Si el usuario hace una pregunta específica que requiere datos de los documentos y el contexto proporcionado no contiene la información, indícalo de forma amable.
-4. Al final de las respuestas basadas en documentos, añade siempre una sección "**Fuentes:**" listando los fragmentos usados.
+REGLAS DE CONTEXTO Y RESPUESTA:
+1. Eres un asistente conversacional. Puedes responder a saludos, despedidas o conversaciones triviales (ej. "Hola", "¿Qué tal?") de forma natural y educada, siguiendo tu personalidad.
+2. Sin embargo, para CUALQUIER pregunta que requiera información, hechos, datos, explicaciones, recetas o conocimiento específico, DEBES usar ÚNICA Y EXCLUSIVAMENTE los fragmentos de documentos proporcionados en el contexto.
+3. Si el usuario pide información específica y NO está en el contexto de los documentos, DEBES negarte a responder diciendo amablemente que "No dispongo de esa información en mis documentos". NO uses tu conocimiento previo para responder.
+4. NO menciones los fragmentos ni cites las fuentes (no digas "según el fragmento 1"). Responde de forma directa y fluida.
 """
 
 def generate_response(
@@ -71,15 +71,7 @@ PREGUNTA DEL USUARIO:
 
     response_text = response.choices[0].message.content
 
-    # Preparar sources para guardar en BD
-    sources = [
-        {
-            "chunk_id": chunk["id"],
-            "document_id": chunk["document_id"],
-            "content_preview": chunk["content"][:200],
-            "similarity": chunk["similarity"],
-        }
-        for chunk in chunks
-    ]
+    # No devolvemos las fuentes al frontend según la petición del usuario
+    sources = []
 
     return response_text, sources
