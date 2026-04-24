@@ -37,9 +37,37 @@ async def upload_document(
     file_bytes = await file.read()
     sb = get_service_client()
 
-    # Subir a Storage
+    # Verificar si ya existe en BD para reemplazarlo
+    existing = sb.table("documents")\
+        .select("id, file_path")\
+        .eq("assistant_id", assistant_id)\
+        .eq("filename", file.filename)\
+        .execute()
+    
+    if existing.data:
+        for doc in existing.data:
+            old_doc_id = doc["id"]
+            old_file_path = doc["file_path"]
+            # Borrar chunks
+            sb.table("document_chunks").delete().eq("document_id", old_doc_id).execute()
+            # Borrar de BD
+            sb.table("documents").delete().eq("id", old_doc_id).execute()
+            # Borrar de storage (por si acaso el upsert no funciona como esperamos)
+            try:
+                sb.storage.from_("documents").remove([old_file_path])
+            except Exception:
+                pass
+
+    # Subir a Storage con upsert
     storage_path = f"{user.id}/{assistant_id}/{file.filename}"
-    sb.storage.from_("documents").upload(storage_path, file_bytes)
+    try:
+        sb.storage.from_("documents").upload(
+            storage_path, 
+            file_bytes, 
+            file_options={"upsert": "true", "x-upsert": "true"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir archivo a storage: {str(e)}")
 
     # Crear registro en BD con status pending
     doc_result = sb.table("documents").insert({
@@ -90,6 +118,16 @@ async def delete_document(assistant_id: str, document_id: str, user=Depends(get_
     sb = get_service_client()
     # Borrar chunks (CASCADE lo hace automáticamente, pero por si acaso)
     sb.table("document_chunks").delete().eq("document_id", document_id).execute()
+    
+    # Obtener el file_path para borrarlo de storage
+    doc_res = sb.table("documents").select("file_path").eq("id", document_id).execute()
+    if doc_res.data:
+        file_path = doc_res.data[0]["file_path"]
+        try:
+            sb.storage.from_("documents").remove([file_path])
+        except Exception:
+            pass
+
     # Borrar documento
     sb.table("documents").delete()\
         .eq("id", document_id)\
